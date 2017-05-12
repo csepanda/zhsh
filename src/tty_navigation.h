@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "../io/io.h"
-#include "../error.h"
+#include "io.h"
+#include "error.h"
 
 #ifndef I_REWROTE
     #include <stdio.h>

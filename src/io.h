@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "../error.h"
+#include "error.h"
 
 #define STDIN  0
 #define STDOUT 1

@@ -69,8 +69,8 @@ static void tty_navigation_object_ini_position(void) {
 
     read(0, buffer, 2);
     if (buffer[0] != '' || buffer[1] != '[') {
-        _panic(PANIC_TTY_NAVIGATION_INI_POSITION_READ_ERROR, 
-               PANIC_ZHYSH_INITIALIZATION_ERROR_CODE);
+        panic(PANIC_TTY_NAVIGATION_INI_POSITION_READ_ERROR, 
+              PANIC_ZHYSH_INITIALIZATION_ERROR_CODE);
     }
     
     while (read(0, (buffer + i++), 1) == 1) {
