@@ -17,3 +17,10 @@ uint32_t int_to_string(int32_t number, char buffer[]) {
     do { *--p = digit[number % 10]; number /= 10; } while (number);
     return length;
 }
+
+char* strdup(const char* string) {
+    size_t length  = strlen(string);
+    char*  new_str = malloc(sizeof(char)*length);
+    strcpy(new_str, string);
+    return new_str;
+}
