@@ -7,6 +7,13 @@
 
 #define unless(exp) if (!(exp))
 
+/* function: str_is_num :: check that string contains only number
+ *     args:        str :: string to check
+ *   return: 1 if true, otherwise 0
+ */
+int str_is_num(char* str);
+
+
 /* function: int_to_string :: converts 32-bit integer to string
  *     args:             i :: integer to convert
  *                  buffer :: char array to place string 
