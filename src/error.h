@@ -22,6 +22,10 @@
 
 #define ALARM_PWD_EACCES "zhsh: cannot print current directory. Permission denied\n"
 #define ALARM_PWD_DEF "zhsh: cannot print current directory\n"
+#define ALARM_KILL_BAD_PID "zhsh: cannot send signal. Illegal PID\n"
+#define ALARM_KILL_BAD_SIG "zhsh: cannot send signal. Illegal signal\n"
+#define ALARM_KILL_PERM    "zhsh: cannot send signal. No permission\n"
+#define ALARM_KILL_NOEXPID "zhsh: cannot send signal. Not existing process\n"
 
 #define PANIC_ZHSH_INITIALIZATION_ERROR_CODE      2
 #define PANIC_ZHSH_RUNTIME_ERROR_CODE             3
