@@ -1,5 +1,5 @@
-#ifndef _ZHYSH_UTIL_H_
-#define _ZHYSH_UTIL_H_
+#ifndef _ZHSH_UTIL_H_
+#define _ZHSH_UTIL_H_
 
 #include <stdint.h>
 #include <stdlib.h>

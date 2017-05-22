@@ -54,3 +54,11 @@ int unset_env(char* key) {
 char* get_env(char* key) {
     return get(environment, key);
 }
+
+void debug_env(void) {
+    int i = 0;
+    hnode_t** nodes = get_hnode_set(environment);
+    for (i = 0; i < environment->size; i++) {
+        printf("%s -> %s\n", nodes[i]->key, nodes[i]->value);
+    }
+}

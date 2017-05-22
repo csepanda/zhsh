@@ -1,5 +1,5 @@
-#ifndef _ZHYSH_ENVVAR_H_
-#define _ZHYSH_ENVVAR_H_
+#ifndef _ZHSH_ENVVAR_H_
+#define _ZHSH_ENVVAR_H_
 
 #include <unistd.h>
 #include <stdint.h>
@@ -12,6 +12,7 @@
 #include "util.h"
 
 void env_init();
+void debug_env();
 
 int   set_env  (char* key, char* name);
 int   unset_env(char* key);

@@ -1,11 +1,12 @@
-#ifndef _ZHYSH_TTY_NAVIGATION_H
-#define _ZHYSH_TTY_NAVIGATION_H
+#ifndef _ZHSH_TTY_NAVIGATION_H_
+#define _ZHSH_TTY_NAVIGATION_H_
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include "io.h"
+#include "util.h"
 #include "error.h"
 
 #ifndef I_REWROTE
