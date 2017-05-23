@@ -1,17 +1,17 @@
-static void error(const char* const cause) {
-    send_msg(ALARM_CD, cause);
+static void cd_error(const char* const cause) {
+    send_errmsg(ALARM_CD, cause);
 }
 
 static int _change_directory(char* npwd, char* opwd) {
     if (chdir(npwd)) {
         switch (errno) {
-            case EACCES : error(ALARM_PERMDENY);        break;
-            case EFAULT : error(ALARM_ILLEGAL_ADDRESS); break; 
-            case EIO    : error(ALARM_IO_FS);           break;
-            case ELOOP  : error(ALARM_ELOOP);           break;
+            case EACCES : cd_error(ALARM_PERMDENY);        break;
+            case EFAULT : cd_error(ALARM_ILLEGAL_ADDRESS); break; 
+            case EIO    : cd_error(ALARM_IO_FS);           break;
+            case ELOOP  : cd_error(ALARM_ELOOP);           break;
             case ENOTDIR: 
-            case ENOENT : error(ALARM_NOSUCHDIR);       break; 
-                 default: error("")                     break;    
+            case ENOENT : cd_error(ALARM_NOSUCHDIR);       break; 
+                 default: cd_error("");                    break;    
         }
         return -1;
     } 
@@ -36,6 +36,6 @@ int cd_builtin(size_t argc, char** argv) {
         return 0;
     }
 
-    alarm_msg(ALARM_CD_DEF);
+    cd_error("");
     return -1;
 }

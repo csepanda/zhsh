@@ -1,4 +1,4 @@
-static void error(const char* const cause) {
+static void pwd_error(const char* const cause) {
     send_errmsg(ALARM_PWD, cause);
 }
 
@@ -7,8 +7,8 @@ char* _gwd() {
     while ((pwd = getcwd(NULL, size)) == NULL) {
         switch (errno) {
             case ERANGE: size = (size * 3) / 2; continue;
-            case EACCES: error(ALARM_PERMDENY); return NULL;
-                default: error("");             return NULL;
+            case EACCES: pwd_error(ALARM_PERMDENY); return NULL;
+                default: pwd_error("");             return NULL;
         }
     }
 
