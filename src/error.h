@@ -13,19 +13,21 @@
 #define PANIC_ENV_INSUFFUCIENT_MEMORY_ERROR "zhsh: insufficient memory to add a new variable to the environment\n"
 #define PANIC_ENV_UNDEFINED_ERROR "zhsh: environment variables unexpected error\n"
 
-#define ALARM_CD_EACCES "zhsh: cannot change directory. Permission denied\n"
-#define ALARM_CD_EFAULT "zhsh: cannot change directory. Illegal address\n"
-#define ALARM_CD_EIO    "zhsh: cannot change directory. I/O error occured while reading from or writing to the file system\n"
-#define ALARM_CD_ELOOP  "zhsh: cannot change directory. Too many symbolic links were encountered in specified path\n"
-#define ALARM_CD_ENODIR "zhsh: cannot change directory. No such directory\n"
-#define ALARM_CD_DEF    "zhsh: cannot change directory\n"
+#define ALARM_PERMDENY        "Permission denied\n"
+#define ALARM_ILLEGAL_ADDRESS "Illegal address\n"
+#define ALARM_IO_FS           "I/O error occured while reading from or writing to the file system\n"
+#define ALARM_ELOOP           "Too many symbolic links were encountered in specified path\n"
+#define ALARM_NOSUCHDIR       "No such directory\n"
+#define ALARM_ILLEGAL_PID     "Illegal PID\n"
+#define ALARM_ILLEGAL_SIG     "Illegal signal\n"
+#define ALARM_ILLEGAL_PROC    "Not existing process\n"
+#define ALARM_TOO_MANY_ARGS   "Too many arguments\n"
 
-#define ALARM_PWD_EACCES "zhsh: cannot print current directory. Permission denied\n"
-#define ALARM_PWD_DEF "zhsh: cannot print current directory\n"
-#define ALARM_KILL_BAD_PID "zhsh: cannot send signal. Illegal PID\n"
-#define ALARM_KILL_BAD_SIG "zhsh: cannot send signal. Illegal signal\n"
-#define ALARM_KILL_PERM    "zhsh: cannot send signal. No permission\n"
-#define ALARM_KILL_NOEXPID "zhsh: cannot send signal. Not existing process\n"
+#define ALARM_CD    "cannot change directory. "
+#define ALARM_PWD   "cannot print current directory. "
+#define ALARM_ECHO  "cannot echo to the terminal. "
+#define ALARM_KILL  "cannot send signal. "
+#define ALARM_SHIFT "cannot shift arguments. "
 
 #define PANIC_ZHSH_INITIALIZATION_ERROR_CODE      2
 #define PANIC_ZHSH_RUNTIME_ERROR_CODE             3
@@ -35,16 +37,22 @@
 typedef uint8_t exit_code_t;
 
 
-/* function:     panic :: print message to stderr and exit with exit_code
- *     args:   message :: message to print
- *           exit_code :: exit code
+/* function:       panic :: print message to stderr and exit with exit_code
+ *     args:     message :: message to print
+ *             exit_code :: exit code
  * */
 void panic(const char* const message, exit_code_t exit_code);
 
-/* function: alarm_msg :: print message to stderr
- *     args:   message :: message to print
+/* function:   alarm_msg :: print message to stderr
+ *     args:     message :: message to print
  * */
 void alarm_msg(const char* const message);
+
+/* function: send_errmsg :: print error message to stderr by caller and cause
+ *     args:      caller :: what bumped into an error
+ *                 cause :: error cause
+ * */
+void send_errmsg(const char* const caller, const char* const cause);
 
 #endif
 

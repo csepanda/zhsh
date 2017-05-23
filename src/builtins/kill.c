@@ -86,7 +86,7 @@ int kill_builtin(size_t argc, char** argv) {
     for (i = 0; i < argc; i++) {
         pid_t pid;
         if (!str_is_num(argv[i])) {
-            alarm_msg(ALARM_KILL_BAD_PID);
+            send_errmsg(ALARM_KILL, ALARM_ILLEGAL_PID);
             return 1;
         }
 
@@ -94,9 +94,9 @@ int kill_builtin(size_t argc, char** argv) {
 
         if (kill(pid, signum) == -1) {
             switch (errno) {
-            case EINVAL: alarm_msg(ALARM_KILL_BAD_SIG); return 1;
-            case EPERM:  alarm_msg(ALARM_KILL_PERM);    return 1;
-            case ESRCH:  alarm_msg(ALARM_KILL_NOEXPID); break;
+            case EINVAL: send_errmsg(ALARM_KILL, ALARM_ILLEGAL_SIG);  return 1;
+            case EPERM:  send_errmsg(ALARM_KILL, ALARM_PERMDENY);     return 1;
+            case ESRCH:  send_errmsg(ALARM_KILL, ALARM_ILLEGAL_PROC); break;
             }
         }
     }
