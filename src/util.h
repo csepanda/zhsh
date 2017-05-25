@@ -28,4 +28,6 @@ uint32_t int_to_string(int32_t i, char buffer[]);
  * */
 char* strdup(const char* string);
 
+char* merge_strings(char** strings, char seperator, int need_to_free); 
+
 #endif
