@@ -170,14 +170,14 @@ char* get(hashtable_t* hashtable, char* key) {
             return NULL;
         }
     } else {
-        while (node->hash == hash && strcmp(node->key, key)) {
-            node = node->next;
-            if (node == NULL) {
-                return NULL;
+        while (node != NULL) {
+            if (node->hash == hash && strcmp(node->key, key) == 0) {
+                return node->value;
             }
+            node = node->next;
         }
 
-        return node->value;
+        return NULL;
     }
 }
 
@@ -222,7 +222,7 @@ int delete_hnode(hashtable_t* hashtable, char* key) {
     } else {
         parent = node;
         node   = node->next;
-        while (node->hash == hash && strcmp(node->key, key)) {
+        while (strcmp(node->key, key) != 0) {
             parent = node;
             node   = node->next;
             if (node == NULL) {

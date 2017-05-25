@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _ZHSH_HASHTABLE_H_
+#define _ZHSH_HASHTABLE_H_
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -24,3 +26,4 @@ hnode_t**    get_hnode_set   (hashtable_t* hashtable);
 int          delete_hnode    (hashtable_t* hashtable, char* key);
 char*        get             (hashtable_t* hashtable, char* key);
 void         put             (hashtable_t* hashtable, char* key, char* value);
+#endif
