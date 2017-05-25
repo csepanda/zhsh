@@ -1,25 +1,18 @@
 #include "env.h"
 
-static char* PS1 = "$ ";
-static char* PS2 = "> ";
-static char* PS3 = "?# ";
-static char* PS4 = "+%N:%i>";
-
-static char* HOME;
-static char* LOGNAME;
-static char* PWD;
-static char* PATH;
+static size_t argc;
+static char** argv;
 
 static hashtable_t* environment;
+
 extern char** environ;
 
-void env_init() {
+
+void env_init(size_t arc, char** arv) {
     char** envs = environ;
     environment = create_hashtable();
-    HOME    = getenv("HOME"   );
-    PWD     = getenv("PWD"    );
-    PATH    = getenv("PATH"   );
-    LOGNAME = getenv("LOGNAME");
+    argc = arc;
+    argv = arv;
     while (*envs != NULL) {
         char* entry = strdup(*envs++);
         char* split = entry;
@@ -52,7 +45,28 @@ int unset_env(char* key) {
 }
 
 char* get_env(char* key) {
+    if (str_is_num(key)) {
+        size_t n = atol(key);
+        return n < argc ? argv[n] : NULL;
+    }
     return get(environment, key);
+}
+
+int shift_pos_args(size_t count) {
+    size_t i;
+
+    if (count >= argc) {
+        argc = 1;
+        return 0;
+    }
+
+    for (i = count; i < argc - 1; i++) {
+        printf("%i %i\n", i, i - count + 1);
+        argv[i - count + 1] = argv[i + 1];
+    }
+
+    argc = argc - count;
+    return 0;
 }
 
 void debug_env(void) {

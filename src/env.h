@@ -18,5 +18,7 @@ int   set_env  (char* key, char* name);
 int   unset_env(char* key);
 char* get_env  (char* key);
 
+int shift_pos_args(size_t count);
+
 
 #endif
