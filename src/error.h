@@ -18,6 +18,7 @@
 #define ALARM_IO_FS           "I/O error occured while reading from or writing to the file system\n"
 #define ALARM_ELOOP           "Too many symbolic links were encountered in specified path\n"
 #define ALARM_NOSUCHDIR       "No such directory\n"
+#define ALARM_ILLEGAL_ARG     "Illegal argument\n"
 #define ALARM_ILLEGAL_PID     "Illegal PID\n"
 #define ALARM_ILLEGAL_SIG     "Illegal signal\n"
 #define ALARM_ILLEGAL_PROC    "Not existing process\n"
@@ -28,6 +29,7 @@
 #define ALARM_ECHO  "cannot echo to the terminal. "
 #define ALARM_KILL  "cannot send signal. "
 #define ALARM_SHIFT "cannot shift arguments. "
+#define ALARM_EXIT  "exit command error. "
 
 #define PANIC_ZHSH_INITIALIZATION_ERROR_CODE      2
 #define PANIC_ZHSH_RUNTIME_ERROR_CODE             3
