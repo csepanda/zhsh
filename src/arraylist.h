@@ -15,6 +15,7 @@ typedef struct {
 typedef struct {
     size_t size;
     size_t capacity;
+    void   (*destructor)(void*);
     void** data;
 } arraylist_t;
 
@@ -25,7 +26,7 @@ void merge_to_arraylist_str       (arraylist_str_t* arraylist, char* string);
 char** to_array_str(arraylist_str_t* arraylist);
 
 
-arraylist_t* new_arraylist   (size_t capacity);
+arraylist_t* new_arraylist   (size_t capacity, void (*destructor)(void*));
 void remove_arraylist        (arraylist_t* arraylist);
 void persist_to_arraylist    (arraylist_t* arraylist, void* data);
 void merge_arraylists        (arraylist_t* dest, arraylist_t* src, size_t pos);
