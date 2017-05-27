@@ -40,8 +40,21 @@ static void print_signals() {
     for (i = 0; i < SIGCOUNT - 1; i++) {
         signal_t sig0 = signals[i];
         signal_t sig1 = signals[++i];
-        printf("%i) %s\t%i) %s\n", sig0.signumb, sig0.signame, 
-                                   sig1.signumb, sig1.signame);
+        char snb0[8];
+        char snb1[8];
+        char* snm0 = sig0.signame;
+        char* snm1 = sig1.signame;
+        size_t snbl0 = int_to_string(sig0.signumb, snb0);
+        size_t snbl1 = int_to_string(sig1.signumb, snb1);
+
+        write(STDOUT, snb0, snbl0);
+        write(STDOUT, ") ", 2);
+        write(STDOUT, snm0, strlen(snm0));
+        write(STDOUT, "\t", 1);
+        write(STDOUT, snb1, snbl1);
+        write(STDOUT, ") ", 2);
+        write(STDOUT, snm1, strlen(snm1));
+        write(STDOUT, "\n", 1);
     }
 }
 

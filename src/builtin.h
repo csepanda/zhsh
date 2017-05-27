@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include "tty_handle.h"
 #include "error.h"
 #include "env.h"
 #include "io.h"

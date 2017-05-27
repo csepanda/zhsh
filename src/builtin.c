@@ -6,3 +6,5 @@
 #include "builtins/kill.c"
 #include "builtins/true.c"
 #include "builtins/false.c"
+#include "builtins/shift.c"
+#include "builtins/exit.c"
