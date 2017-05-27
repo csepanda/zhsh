@@ -39,7 +39,7 @@ uint32_t int_to_string(int32_t number, char buffer[]) {
 
 char* strdup(const char* string) {
     size_t length  = strlen(string);
-    char*  new_str = malloc(sizeof(char)*length + 1);
+    char*  new_str = malloc(sizeof(char)*(length + 1));
     strcpy(new_str, string);
     return new_str;
 }
@@ -49,16 +49,19 @@ char* merge_strings(char** strings, char separator, int need_to_free) {
     char** ptr = strings;
     size_t total_length = 0, i = 0, j = 0;
     while (*ptr != NULL) { total_length += strlen(*ptr); i++; ptr++; }
-    new_string = malloc(sizeof(char)*(total_length + i));
+    new_string = malloc(sizeof(char)*(total_length + i + 1));
     ptr = strings; i = 0;
     while (*ptr != NULL) {
         while ((*ptr)[i] != '\0') {
             new_string[j++] = (*ptr)[i++]; 
         }
-        new_string[j++] = separator; ptr++;
+        if (separator != '\0') {
+            new_string[j++] = separator; 
+        }
+        ptr++; i = 0;
     }
     
-    new_string[j - 1] = '\0';
+    new_string[j] = '\0';
 
     if (need_to_free) {
         ptr = strings;
