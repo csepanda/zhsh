@@ -22,14 +22,26 @@ void remove_arraylist_str(arraylist_str_t* arraylist) {
 
 void persist_to_arraylist_str(arraylist_str_t* arraylist, char* string) {
     if (arraylist->size + 1 >= arraylist->capacity) {
-        char** reallocated = realloc(arraylist->data, arraylist->capacity*2);
-        arraylist->data = reallocated;
+        size_t new_cap       = sizeof(char*) * arraylist->capacity * 2;
+        char** reallocated   = realloc(arraylist->data, new_cap); 
+        arraylist->data      = reallocated;
+        arraylist->capacity  = new_cap;
     }
     arraylist->data[arraylist->size++] = string;
 }
 
 void merge_to_arraylist_str(arraylist_str_t* arraylist, char* string) {
     persist_to_arraylist_str(arraylist, strdup(string));
+}
+
+char** to_array_str(arraylist_str_t* arraylist) {
+    char** array = malloc(sizeof(char*)*(arraylist->size + 1));
+    size_t i; for (i = 0; i < arraylist->size; i++) {
+        array[i] = arraylist->data[i];
+    }
+    array[i] = NULL;
+
+    return array;
 }
 
 arraylist_t* new_arraylist(size_t capacity) {
@@ -54,16 +66,20 @@ void remove_arraylist(arraylist_t* arraylist) {
 
 void persist_to_arraylist(arraylist_t* arraylist, void* data) {
     if (arraylist->size + 1 >= arraylist->capacity) {
-        void** reallocated = realloc(arraylist->data, arraylist->capacity*2);
-        arraylist->data = reallocated;
+        size_t new_cap       = sizeof(void*) * arraylist->capacity * 2;
+        void** reallocated   = realloc(arraylist->data, new_cap); 
+        arraylist->data      = reallocated;
+        arraylist->capacity  = new_cap;
     }
     arraylist->data[arraylist->size++] = data;
 }
 
 void merge_arraylists(arraylist_t* dest, arraylist_t* src, size_t pos) {
     size_t i; if (dest->size + src->size >= dest->capacity) {
-        void** reallocated = realloc(dest->data, dest->capacity + src->size);
-        dest->data = reallocated;
+        size_t new_cap     = sizeof(void*) * dest->capacity * 2;
+        void** reallocated = realloc(dest->data, new_cap); 
+        dest->data         = reallocated;
+        dest->capacity     = new_cap;
     }
 
     if (dest->size > pos) {
