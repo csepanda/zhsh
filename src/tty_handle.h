@@ -9,10 +9,9 @@
 #include <stdint.h>
 #include "error.h"
 
-struct termios saved_tty;
-struct termios tty;
 
 int set_tty_ncanon(void);
+int setup_tty(void);
 int reset_tty(void);
 
 #endif
