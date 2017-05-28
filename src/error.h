@@ -13,6 +13,8 @@
 #define PANIC_ENV_INSUFFUCIENT_MEMORY_ERROR "zhsh: insufficient memory to add a new variable to the environment\n"
 #define PANIC_ENV_UNDEFINED_ERROR "zhsh: environment variables unexpected error\n"
 
+#define ALARM_CANNOT_EXEC     "zhsh: cannot execute command\n"
+
 #define ALARM_PERMDENY        "Permission denied\n"
 #define ALARM_ILLEGAL_ADDRESS "Illegal address\n"
 #define ALARM_IO_FS           "I/O error occured while reading from or writing to the file system\n"
@@ -23,6 +25,10 @@
 #define ALARM_ILLEGAL_SIG     "Illegal signal\n"
 #define ALARM_ILLEGAL_PROC    "Not existing process\n"
 #define ALARM_TOO_MANY_ARGS   "Too many arguments\n"
+#define ALARM_RUNTIME_ERR     "Runtime error occurred\n"
+#define ALARM_CMD_NOT_FOUND   ":: Command not found\n"
+#define ALARM_FILE_NOT_FOUND  ":: No such file or directory\n"
+#define ALARM_NO_SUCH_JOB     "No such job\n"
 
 #define ALARM_CD    "cannot change directory. "
 #define ALARM_PWD   "cannot print current directory. "
@@ -30,6 +36,8 @@
 #define ALARM_KILL  "cannot send signal. "
 #define ALARM_SHIFT "cannot shift arguments. "
 #define ALARM_EXIT  "exit command error. "
+#define ALARM_FG    "cannot put job in foreground. "
+#define ALARM_BG    "cannot put job in background. "
 
 #define PANIC_ZHSH_INITIALIZATION_ERROR_CODE      2
 #define PANIC_ZHSH_RUNTIME_ERROR_CODE             3
