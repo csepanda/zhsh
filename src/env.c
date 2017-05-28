@@ -61,7 +61,6 @@ int shift_pos_args(size_t count) {
     }
 
     for (i = count; i < argc - 1; i++) {
-        printf("%i %i\n", i, i - count + 1);
         argv[i - count + 1] = argv[i + 1];
     }
 
@@ -73,6 +72,11 @@ void debug_env(void) {
     int i = 0;
     hnode_t** nodes = get_hnode_set(environment);
     for (i = 0; i < environment->size; i++) {
-        printf("%s -> %s\n", nodes[i]->key, nodes[i]->value);
+        char* key = nodes[i]->key;
+        char* val = nodes[i]->value;
+        write(STDOUT, key, strlen(key));
+        write(STDOUT, " -> ", 4);
+        write(STDOUT, val, strlen(val));
+        write(STDOUT, "\n", 1);
     }
 }
