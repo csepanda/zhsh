@@ -78,6 +78,16 @@ void persist_to_arraylist(arraylist_t* arraylist, void* data) {
     arraylist->data[arraylist->size++] = data;
 }
 
+void remove_from_arraylist(arraylist_t* arraylist, size_t index) {
+    size_t i; 
+    void* data = arraylist->data[index];
+    for (i = index + 1; i < arraylist->size; i++) {
+        arraylist->data[i - 1] = arraylist->data[i];
+    }
+    arraylist->size--;
+    arraylist->destructor(data);
+}
+
 void merge_arraylists(arraylist_t* dest, arraylist_t* src, size_t pos) {
     size_t i; if (dest->size + src->size >= dest->capacity) {
         size_t new_cap     = dest->capacity + src->size;
