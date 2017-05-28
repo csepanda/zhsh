@@ -270,6 +270,7 @@ static int open_glob(arraylist_t* list, size_t index) {
 void handle_line(char* line, const size_t size) {
     char* IFS = get_env("IFS");
     char* token;
+    char* cmd;
     char** to_merge;
     char** args;
     size_t i;
@@ -290,6 +291,7 @@ void handle_line(char* line, const size_t size) {
     }
     to_merge[i] = NULL;
     line = merge_strings(to_merge, ' ', NO);
+    cmd  = strdup(line);
 
     token     = strtok(line, IFS);
     args_list = new_arraylist_str(2 + tokens->size);
@@ -301,18 +303,13 @@ void handle_line(char* line, const size_t size) {
 
     if (args_list->size > 0) {
         size_t argc = args_list->size;
-        if (exec_builtin_cmd(argc, args) != -2) {
-
-        } else if (strcmp(args[0], "jobs") == 0) {
-            print_all_jobs();
-        } else if (strcmp(args[0], "fg") == 0) {
-            set_foreground_by_num(0, 1);
-        } else {
+        if (exec_builtin_cmd(argc, args) == -2) {
             pid_t child = fork();
             if (child == -1) {
                 alarm_msg(ALARM_CANNOT_EXEC);
             } else if (child > 0) {
-                int num = add_job(child, strdup(line));
+                int num = add_job(child, cmd);
+                cmd = NULL;
                 set_foreground_by_num(num, 0);
             } else if (is_path(args[0], strlen(args[0]))) {
                 reset_tty();
@@ -343,7 +340,7 @@ void handle_line(char* line, const size_t size) {
             }
         }
     }
-
+    if (cmd != NULL) free(cmd);
     free(line);
     free(args);
     free(to_merge);
