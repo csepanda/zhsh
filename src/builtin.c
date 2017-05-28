@@ -8,3 +8,27 @@
 #include "builtins/false.c"
 #include "builtins/shift.c"
 #include "builtins/exit.c"
+
+builtin_t builtins[11] = { 
+    { "cd",       cd_builtin }, { "pwd",     pwd_builtin },
+    { "echo",   echo_builtin }, { "kill",   kill_builtin },
+    { "shift", shift_builtin }, { "exit",   exit_builtin },
+    { "true",   true_builtin }, { "false", false_builtin },
+    { NULL, NULL },
+    { NULL, NULL },
+    { NULL, NULL }
+};
+
+
+int exec_builtin_cmd(size_t argc, char** argv) {
+    builtin_t* ptr = builtins;
+    while ((*ptr).cmd_name != NULL) {
+        char* cmd_name = (*ptr).cmd_name;
+        if (strcmp(cmd_name, argv[0]) == 0) {
+            return (*ptr).cmd_func(argc, argv);
+        }
+        ptr++;
+    }
+
+    return -2;
+}

@@ -11,6 +11,7 @@
 #include "tty_handle.h"
 #include "error.h"
 #include "env.h"
+#include "sig.h"
 #include "io.h"
 
 typedef struct _builtin {
@@ -36,13 +37,5 @@ int exit_builtin (size_t argc, char** argv);
 int true_builtin (size_t argc, char** argv);
 int false_builtin(size_t argc, char** argv);
 
-/*
-builtin_t builtins[10] = { 
-    { "cd",       cd_builtin }, { "pwd",     pwd_builtin },
-    { "echo",   echo_builtin }, { "read",   read_builtin },
-    { "exec",   exec_builtin }, { "kill",   kill_builtin },
-    { "shift", shift_builtin }, { "exit",   exit_builtin },
-    { "true",   true_builtin }, { "false", false_builtin }
-};
-*/
+int exec_builtin_cmd(size_t argc, char** argv);
 #endif

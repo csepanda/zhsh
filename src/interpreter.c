@@ -71,7 +71,7 @@ static void new_token(arraylist_t* tokens, int   proc, int    elvl,
     persist_to_arraylist(tokens, tkn);
 }
 
-static void delete_token(void* data) {
+void delete_token(void* data) {
     token_t* token = (token_t*) data;
     free(token->str);
     free(token);
@@ -300,18 +300,47 @@ void handle_line(char* line, const size_t size) {
     args = to_array_str(args_list);
 
     if (args_list->size > 0) {
-        if (strcmp(args[0], "cd") == 0) {
-            cd_builtin(args_list->size, args);
-        } else if (strcmp(args[0], "pwd") == 0) {
-            pwd_builtin(args_list->size, args);
-        } else if (strcmp(args[0], "exit") == 0) {
-            exit_builtin(args_list->size, args);
-        } else if (strcmp(args[0], "echo") == 0) {
-            echo_builtin(args_list->size, args);
-        } else if (strcmp(args[0], "kill") == 0) {
-            kill_builtin(args_list->size, args);
-        } else if (strcmp(args[0], "shift") == 0) {
-            shift_builtin(args_list->size, args);
+        size_t argc = args_list->size;
+        if (exec_builtin_cmd(argc, args) != -2) {
+
+        } else if (strcmp(args[0], "jobs") == 0) {
+            print_all_jobs();
+        } else if (strcmp(args[0], "fg") == 0) {
+            set_foreground_by_num(0, 1);
+        } else {
+            pid_t child = fork();
+            if (child == -1) {
+                alarm_msg(ALARM_CANNOT_EXEC);
+            } else if (child > 0) {
+                int num = add_job(child, strdup(line));
+                set_foreground_by_num(num, 0);
+            } else if (is_path(args[0], strlen(args[0]))) {
+                reset_tty();
+                execv(args[0], args);
+                switch (errno) {
+                case  ENOENT:
+                case ENOTDIR:
+                    send_errmsg(args[0], ALARM_FILE_NOT_FOUND);
+                    break;
+                default:
+                    send_errmsg("", ALARM_RUNTIME_ERR);
+                }
+                _exit(127);
+            } else {
+                reset_tty();
+                if (strchr(line, '&') != NULL) {
+                }
+                execvp(args[0], args);
+                switch (errno) {
+                case  ENOENT:
+                case ENOTDIR:
+                    send_errmsg(args[0], ALARM_CMD_NOT_FOUND);
+                    break;
+                default:
+                    send_errmsg("", ALARM_RUNTIME_ERR);
+                }
+                _exit(127);
+            }
         }
     }
 
