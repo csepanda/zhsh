@@ -1,16 +1,19 @@
 #include "jobs.h"
 
-static arraylist_t* jobs;
-static int jobs_num = 0;
+static job_list_t* jobs;
+static size_t last_updt_job = -1;
+
 job_t* new_job(pid_t pid, char* cmd) {
     job_t* job = malloc(sizeof(job_t));
     job->pid     = pid;
     job->cmd     = cmd;
-    job->num     = jobs_num++;
+    job->num     = jobs->tail == NULL ? 0 : jobs->tail->num + 1;
     job->stat    = RUNNING;
     job->extcode = 1337;
     job->signum  = 1337;
+    job->next    = NULL;
     setpgid(pid, pid);
+    last_updt_job = job->num;
 
     return job;
 }
@@ -22,24 +25,63 @@ void delete_job(void* raw_job) {
 }
 
 void job_init() {
-    jobs = new_arraylist(255, &delete_job);
+    jobs = malloc(sizeof(job_list_t));
+    jobs->size = 0;
+    jobs->head = NULL;
+    jobs->tail = NULL;
 }
 
 int add_job(pid_t pid, char* cmd) {
     job_t* job = new_job(pid, cmd);
-    persist_to_arraylist(jobs, job);
+    if (jobs->head == NULL) {
+        jobs->head = job;
+        jobs->tail = job;
+    } else {
+        jobs->tail->next = job;
+        jobs->tail = job;
+    }
+    jobs->size++;
     return job->num;
 }
 
 static job_t* get_job(size_t num) {
-    size_t i; for (i = 0; i < jobs->size; i++) {
-        job_t* job = jobs->data[i];
+    job_t* job = jobs->head;
+    while (job != NULL) {
         if (job->num == num) {
             return job;
         }
+        job = job->next;
     }
 
     return NULL;
+}
+
+static int remove_job(job_t* job) {
+    job_t* parent = jobs->head;
+    job_t* child  = parent;
+    while (child != NULL) {
+        if (child == job) {
+            if (child == parent) {
+                if (child != jobs->tail) {
+                    jobs->head = child->next;
+                } else {
+                    jobs->head = NULL;
+                    jobs->tail = NULL;
+                }
+            } else if (child == jobs->tail) {
+                jobs->tail = parent;
+            } else {
+                parent->next = child->next;
+            }
+            delete_job(child);
+            jobs->size--;
+            return 0;
+        }
+        parent = child;
+        child  = child->next;
+    }
+
+    return -1;
 }
 
 static char* get_string_status(job_stat_t status) {
@@ -48,6 +90,8 @@ static char* get_string_status(job_stat_t status) {
         return "RUNNING";
     case STOPPED:
         return "STOPPED";
+    case TERMINATED:
+        return "TERMINATED";
     case DONE:
         return "DONE";
     default:
@@ -91,29 +135,29 @@ static void write_status(job_t* job) {
 }
 
 void print_all_jobs() {
-    size_t i; for (i = 0; i < jobs->size; i++) {
-        job_t* job = jobs->data[i];
+    job_t* job = jobs->head;
+    while (job != NULL) {
         write_status(job);
+        job = job->next;
     }
 }
 
 int wait_jobs() {
-    size_t i; for (i = 0; i < jobs->size; i++) {
-        job_t* job = jobs->data[i];
+    job_t* job = jobs->head;
+    job_t* next;
+    while (job != NULL) {
         int status;
         pid_t ret = waitpid(job->pid, &status, WNOHANG);
+        next = job->next;
         if (ret < 0) {
-            remove_from_arraylist(jobs, i);
+            remove_job(job);
         } else if (ret == job->pid) {
             job->extcode = status;
             job->stat    = DONE;
             write_status(job);
-            remove_from_arraylist(jobs, i);
+            remove_job(job);
         }
-    }
-
-    if (jobs->size == 0) {
-        jobs_num = 0;
+        job = next;
     }
 
     return 0;
@@ -131,7 +175,9 @@ int set_foreground_by_num(size_t num, int cont) {
     tcsetpgrp(STDIN, job->pid);
 
     if (cont) {
+        reset_tty();
         kill(-job->pid, SIGCONT);
+        job->stat = RUNNING;
         write_status(job);
     }
 
@@ -139,22 +185,36 @@ int set_foreground_by_num(size_t num, int cont) {
     if (WIFEXITED(status)) {
         job->extcode = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
+        job->stat   = TERMINATED;
         job->signum = WTERMSIG(status);
     }
 
     if (WIFSTOPPED(status)) {
         job->stat = STOPPED;
         write_status(job);
+        last_updt_job = job->num;
     } else {
         job->stat = DONE;
     }
 
-
-
     tcsetpgrp(STDOUT, getpid());
-    set_tty_ncanon();
+    setup_tty();
 
     return 0;
+}
+        
+int set_foreground_last_updated_job() {
+    job_t* job = get_job(last_updt_job);
+    if (job == NULL) {
+        if ((job = jobs->tail) != NULL) {
+            return set_foreground_by_num(job->num, 1);
+        } else {
+            send_errmsg(ALARM_FG, ALARM_NO_SUCH_JOB); 
+            return -1;
+        }
+    } else {
+        return set_foreground_by_num(last_updt_job, 1);
+    }
 }
 
 void set_background_by_num(size_t num, int cont) {

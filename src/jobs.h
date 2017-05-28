@@ -7,30 +7,40 @@
 #include <unistd.h>
 #include <signal.h>
 #include "tty_handle.h"
-#include "arraylist.h"
 #include "util.h"
 #include "sig.h"
 #include "io.h"
 
-typedef enum { RUNNING, DONE, STOPPED } job_stat_t;
+typedef enum { RUNNING, DONE, STOPPED, TERMINATED } job_stat_t;
 
-typedef struct {
+typedef struct _job {
     pid_t      pid;
     char*      cmd;
     size_t     num;
     int        extcode;
     int        signum;
     job_stat_t stat;
+
+    struct _job* next;
 } job_t;
+
+typedef struct {
+    size_t size;
+    job_t* head;
+    job_t* tail;
+} job_list_t;
 
 void job_init();
 void print_all_jobs();
 
 int  add_job(pid_t pid, char* cmd);
 
+
 int wait_jobs();
 int set_foreground_by_num(size_t num, int cont);
 void set_background_by_num(size_t num, int cont);
+
+int set_foreground_last_updated_job();
 
 
 
