@@ -8,14 +8,15 @@
 #include "builtins/false.c"
 #include "builtins/shift.c"
 #include "builtins/exit.c"
+#include "builtins/jobs.c"
+#include "builtins/fg.c"
 
 builtin_t builtins[11] = { 
     { "cd",       cd_builtin }, { "pwd",     pwd_builtin },
     { "echo",   echo_builtin }, { "kill",   kill_builtin },
     { "shift", shift_builtin }, { "exit",   exit_builtin },
     { "true",   true_builtin }, { "false", false_builtin },
-    { NULL, NULL },
-    { NULL, NULL },
+    { "jobs",   jobs_builtin }, { "fg",       fg_builtin },
     { NULL, NULL }
 };
 

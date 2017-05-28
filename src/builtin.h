@@ -10,6 +10,7 @@
 #include <getopt.h>
 #include "tty_handle.h"
 #include "error.h"
+#include "jobs.h"
 #include "env.h"
 #include "sig.h"
 #include "io.h"
