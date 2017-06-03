@@ -2,6 +2,7 @@
 
 static job_list_t* jobs;
 static size_t last_updt_job = -1;
+static pid_t  SHELL_PID;
 
 job_t* new_job(pid_t pid, char* cmd) {
     job_t* job = malloc(sizeof(job_t));
@@ -29,6 +30,7 @@ void job_init() {
     jobs->size = 0;
     jobs->head = NULL;
     jobs->tail = NULL;
+    SHELL_PID = getpid();
 }
 
 int add_job(pid_t pid, char* cmd) {
@@ -164,7 +166,7 @@ int wait_jobs() {
 }
 
 
-int set_foreground_by_num(size_t num, int cont) {
+int set_foreground_by_num(size_t num) {
     job_t* job = get_job(num);
     int status;
     if (job == NULL) {
@@ -174,7 +176,7 @@ int set_foreground_by_num(size_t num, int cont) {
     
     tcsetpgrp(STDIN, job->pid);
 
-    if (cont) {
+    if (job->stat == STOPPED) {
         reset_tty();
         kill(-job->pid, SIGCONT);
         job->stat = RUNNING;
@@ -197,7 +199,7 @@ int set_foreground_by_num(size_t num, int cont) {
         job->stat = DONE;
     }
 
-    tcsetpgrp(STDOUT, getpid());
+    tcsetpgrp(STDOUT, SHELL_PID);
     setup_tty();
 
     return 0;
@@ -207,16 +209,62 @@ int set_foreground_last_updated_job() {
     job_t* job = get_job(last_updt_job);
     if (job == NULL) {
         if ((job = jobs->tail) != NULL) {
-            return set_foreground_by_num(job->num, 1);
+            return set_foreground_by_num(job->num);
         } else {
             send_errmsg(ALARM_FG, ALARM_NO_SUCH_JOB); 
             return -1;
         }
     } else {
-        return set_foreground_by_num(last_updt_job, 1);
+        return set_foreground_by_num(last_updt_job);
     }
 }
 
-void set_background_by_num(size_t num, int cont) {
+int set_background_by_num(size_t num) {
+    int status;
+    job_t* job = get_job(num);
+    if (job == NULL) {
+        send_errmsg(ALARM_BG, ALARM_NO_SUCH_JOB); 
+        return -1;
+    }
+    
+    if (job->stat == STOPPED) {
+        reset_tty();
+        kill(-job->pid, SIGCONT);
+        job->stat = RUNNING;
+        write_status(job);
+    }
 
+    tcsetpgrp(STDOUT, SHELL_PID);
+
+    waitpid(job->pid, &status, WNOHANG | WUNTRACED);
+    if (WIFEXITED(status)) {
+        job->extcode = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        job->stat   = TERMINATED;
+        job->signum = WTERMSIG(status);
+    }
+
+    if (WIFSTOPPED(status)) {
+        job->stat = STOPPED;
+        write_status(job);
+        last_updt_job = job->num;
+    } else {
+        job->stat = DONE;
+    }
+
+    return 0;
+}
+
+int set_background_last_updated_job() {
+    job_t* job = get_job(last_updt_job);
+    if (job == NULL) {
+        if ((job = jobs->tail) != NULL) {
+            return set_background_by_num(job->num);
+        } else {
+            send_errmsg(ALARM_BG, ALARM_NO_SUCH_JOB); 
+            return -1;
+        }
+    } else {
+        return set_background_by_num(last_updt_job);
+    }
 }

@@ -310,7 +310,7 @@ void handle_line(char* line, const size_t size) {
             } else if (child > 0) {
                 int num = add_job(child, cmd);
                 cmd = NULL;
-                set_foreground_by_num(num, 0);
+                set_foreground_by_num(num);
             } else if (is_path(args[0], strlen(args[0]))) {
                 reset_tty();
                 execv(args[0], args);

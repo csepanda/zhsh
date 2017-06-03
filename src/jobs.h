@@ -37,10 +37,11 @@ int  add_job(pid_t pid, char* cmd);
 
 
 int wait_jobs();
-int set_foreground_by_num(size_t num, int cont);
-void set_background_by_num(size_t num, int cont);
+int set_foreground_by_num(size_t num);
+int set_background_by_num(size_t num);
 
 int set_foreground_last_updated_job();
+int set_background_last_updated_job();
 
 
 

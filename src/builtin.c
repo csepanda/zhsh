@@ -10,13 +10,15 @@
 #include "builtins/exit.c"
 #include "builtins/jobs.c"
 #include "builtins/fg.c"
+#include "builtins/bg.c"
 
-builtin_t builtins[11] = { 
+builtin_t builtins[] = { 
     { "cd",       cd_builtin }, { "pwd",     pwd_builtin },
     { "echo",   echo_builtin }, { "kill",   kill_builtin },
     { "shift", shift_builtin }, { "exit",   exit_builtin },
     { "true",   true_builtin }, { "false", false_builtin },
     { "jobs",   jobs_builtin }, { "fg",       fg_builtin },
+    { "bg",       bg_builtin },
     { NULL, NULL }
 };
 
