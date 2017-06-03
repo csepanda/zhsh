@@ -15,11 +15,12 @@ typedef enum { RUNNING, DONE, STOPPED, TERMINATED } job_stat_t;
 
 typedef struct _job {
     pid_t      pid;
-    char*      cmd;
+    char**     argv;
+    size_t     argc;
     size_t     num;
+    job_stat_t stat;
     int        extcode;
     int        signum;
-    job_stat_t stat;
 
     struct _job* next;
 } job_t;
@@ -33,7 +34,7 @@ typedef struct {
 void job_init();
 void print_all_jobs();
 
-int  add_job(pid_t pid, char* cmd);
+int  add_job(pid_t pid, size_t argc, char** argv);
 
 
 int wait_jobs();

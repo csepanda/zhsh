@@ -4,10 +4,11 @@ static job_list_t* jobs;
 static size_t last_updt_job = -1;
 static pid_t  SHELL_PID;
 
-job_t* new_job(pid_t pid, char* cmd) {
+job_t* new_job(pid_t pid, size_t argc, char** argv) {
     job_t* job = malloc(sizeof(job_t));
     job->pid     = pid;
-    job->cmd     = cmd;
+    job->argc    = argc;
+    job->argv    = argv;
     job->num     = jobs->tail == NULL ? 0 : jobs->tail->num + 1;
     job->stat    = RUNNING;
     job->extcode = 1337;
@@ -21,20 +22,20 @@ job_t* new_job(pid_t pid, char* cmd) {
 
 void delete_job(void* raw_job) {
     job_t* job = (job_t*) raw_job;
-    free(job->cmd);
+    size_t i; for (i = 0; i < job->argc; i++) {
+        free(job->argv[i]);
+    }
+    free(job->argv);
     free(job);
 }
 
 void job_init() {
-    jobs = malloc(sizeof(job_list_t));
-    jobs->size = 0;
-    jobs->head = NULL;
-    jobs->tail = NULL;
+    jobs = calloc(1, sizeof(job_list_t));
     SHELL_PID = getpid();
 }
 
-int add_job(pid_t pid, char* cmd) {
-    job_t* job = new_job(pid, cmd);
+int add_job(pid_t pid, size_t argc, char** argv) {
+    job_t* job = new_job(pid, argc, argv);
     if (jobs->head == NULL) {
         jobs->head = job;
         jobs->tail = job;
@@ -106,10 +107,10 @@ static void write_status(job_t* job) {
     char  exit_code[32];
     char* output;
     char* status;
+    size_t i;
     size_t num_length = int_to_string(job->num, number);
     size_t ecd_length = int_to_string(job->extcode, exit_code);
-    size_t cmd_length = strlen(job->cmd);
-    size_t out_length = 32 + num_length + cmd_length + ecd_length;
+    size_t out_length = 34 + num_length + ecd_length;
     output = calloc(out_length, sizeof(char));
     status = get_string_status(job->stat);
     strcat(output, "[");
@@ -129,10 +130,14 @@ static void write_status(job_t* job) {
         strcat(output, "\t\t");
     }
 
-    strcat(output, job->cmd);
-    strcat(output, "\n\0");
+    print(output);
+    for (i = 0; i < job->argc; i++) {
+        print(job->argv[i]);
+        print(" ");
+    }
 
-    write(1, output, strlen(output));
+    print("\n");
+
     free(output);
 }
 

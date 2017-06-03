@@ -178,7 +178,9 @@ char* expand_variables(token_t* token) {
     token->str = merge_strings(to_merge, '\0', NO); 
     token->len = strlen(token->str);
 
-    free(str);
+    free(str); for (i = 0; i < sep->size; i++) {
+        free(to_merge[i]);
+    }
     free(to_merge);
     remove_arraylist_str(sep);
 
@@ -270,7 +272,6 @@ static int open_glob(arraylist_t* list, size_t index) {
 void handle_line(char* line, const size_t size) {
     char* IFS = get_env("IFS");
     char* token;
-    char* cmd;
     char** to_merge;
     char** args;
     size_t i;
@@ -291,7 +292,6 @@ void handle_line(char* line, const size_t size) {
     }
     to_merge[i] = NULL;
     line = merge_strings(to_merge, ' ', NO);
-    cmd  = strdup(line);
 
     token     = strtok(line, IFS);
     args_list = new_arraylist_str(2 + tokens->size);
@@ -299,17 +299,22 @@ void handle_line(char* line, const size_t size) {
         merge_to_arraylist_str(args_list, token);
         token     = strtok(NULL, IFS);
     } 
-    args = to_array_str(args_list);
+
 
     if (args_list->size > 0) {
         size_t argc = args_list->size;
-        if (exec_builtin_cmd(argc, args) == -2) {
+        args = to_array_str(args_list);
+        if (exec_builtin_cmd(argc, args) != -2) {
+            size_t i; for (i = 0; i < argc; i++) {
+                free(args[i]);
+            }
+            free(args);
+        } else {
             pid_t child = fork();
             if (child == -1) {
                 alarm_msg(ALARM_CANNOT_EXEC);
             } else if (child > 0) {
-                int num = add_job(child, cmd);
-                cmd = NULL;
+                int num = add_job(child, argc, args);
                 set_foreground_by_num(num);
             } else if (is_path(args[0], strlen(args[0]))) {
                 reset_tty();
@@ -340,9 +345,8 @@ void handle_line(char* line, const size_t size) {
             }
         }
     }
-    if (cmd != NULL) free(cmd);
+
     free(line);
-    free(args);
     free(to_merge);
     remove_arraylist(tokens);
     remove_arraylist_str(args_list);

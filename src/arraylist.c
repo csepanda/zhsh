@@ -38,7 +38,7 @@ void merge_to_arraylist_str(arraylist_str_t* arraylist, char* string) {
 char** to_array_str(arraylist_str_t* arraylist) {
     char** array = malloc(sizeof(char*)*(arraylist->size + 1));
     size_t i; for (i = 0; i < arraylist->size; i++) {
-        array[i] = arraylist->data[i];
+        array[i] = strdup(arraylist->data[i]);
     }
     array[i] = NULL;
 
