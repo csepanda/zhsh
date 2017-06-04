@@ -32,7 +32,11 @@ typedef enum {
     TKN_TYPE_BIND_AND,
     TKN_TYPE_BIND_OR,
     TKN_TYPE_BIND_PIPE,
-    TKN_TYPE_BIND_BG
+    TKN_TYPE_BIND_BG,
+
+    TKN_TYPE_IN_REDIR,
+    TKN_TYPE_OUT_REDIR_REWRITE,
+    TKN_TYPE_OUT_REDIR_APPEND
 } tkn_type_t;
 
 typedef struct {

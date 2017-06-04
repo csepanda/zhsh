@@ -27,6 +27,14 @@ static void push_bind(arraylist_t* storage, tkn_type_t type) {
     persist_to_arraylist(storage, new_token_bd(type));
 }
 
+static token_t* last_token(arraylist_t* tokens) {
+    if (tokens->size == 0) {
+        return NULL;
+    } else {
+        return (token_t*) tokens->data[tokens->size - 1];
+    }
+}
+
 #define is_word_end (i == length - 1 || is_whitespace(c))
 arraylist_t* tokenize(char* line, const size_t length) {
     int  IS_TOKEN = NO; size_t i, j; char c;
@@ -66,9 +74,29 @@ arraylist_t* tokenize(char* line, const size_t length) {
                         reset(&IS_TOKEN, &j, &esc_lvl, &tkn_proc);
                         if (line[i + 1] == '&') {
                             push_bind(tokens, TKN_TYPE_BIND_AND); i++;
-                        } else {
-                            push_bind(tokens, TKN_TYPE_BIND_BG);
+                        } else { 
+                            token_t* last = last_token(tokens);
+                            if (last       != NULL                      && 
+                               (last->type == TKN_TYPE_IN_REDIR         ||
+                                last->type == TKN_TYPE_OUT_REDIR_APPEND ||
+                                last->type == TKN_TYPE_OUT_REDIR_REWRITE)) {
+                                token[j++] = c;
+                            } else {
+                                push_bind(tokens, TKN_TYPE_BIND_BG);
+                            }
                         }
+                    } else if (c == '>' && token[j - 1] != '\\') {
+                        push_word(tokens, token, j, esc_lvl, tkn_proc);
+                        reset(&IS_TOKEN, &j, &esc_lvl, &tkn_proc);
+                        if (line[i + 1] == '>') {
+                            push_bind(tokens, TKN_TYPE_OUT_REDIR_APPEND); i++;
+                        } else {
+                            push_bind(tokens, TKN_TYPE_OUT_REDIR_REWRITE);
+                        }
+                    } else if (c == '<' && token[j - 1] != '\\') {
+                        push_word(tokens, token, j, esc_lvl, tkn_proc);
+                        push_bind(tokens, TKN_TYPE_IN_REDIR);
+                        reset(&IS_TOKEN, &j, &esc_lvl, &tkn_proc);
                     } else {
                         token[j++] = c;
                     }
