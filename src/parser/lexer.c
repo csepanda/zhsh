@@ -138,6 +138,8 @@ arraylist_t* tokenize(char* line, const size_t length) {
             }
         }
     }
+
+    push_bind(tokens, TKN_TYPE_EOF);
     
     return tokens;
 }

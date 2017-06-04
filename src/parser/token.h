@@ -36,7 +36,9 @@ typedef enum {
 
     TKN_TYPE_IN_REDIR,
     TKN_TYPE_OUT_REDIR_REWRITE,
-    TKN_TYPE_OUT_REDIR_APPEND
+    TKN_TYPE_OUT_REDIR_APPEND,
+
+    TKN_TYPE_EOF
 } tkn_type_t;
 
 typedef struct {
