@@ -12,11 +12,17 @@ arraylist_str_t* new_arraylist_str(size_t capacity) {
     return arraylist;
 }
 
-void remove_arraylist_str(arraylist_str_t* arraylist) {
+void clear_arraylist_str(arraylist_str_t* arraylist) {
     size_t i; for (i = 0; i < arraylist->size; i++) {
         free(arraylist->data[i]);
     }
 
+    arraylist->size = 0;
+}
+
+
+void remove_arraylist_str(arraylist_str_t* arraylist) {
+    clear_arraylist_str(arraylist);
     free(arraylist->data);
     free(arraylist);
 }

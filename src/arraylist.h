@@ -21,6 +21,7 @@ typedef struct {
 
 arraylist_str_t* new_arraylist_str(size_t capacity);
 void remove_arraylist_str         (arraylist_str_t* arraylist);
+void clear_arraylist_str          (arraylist_str_t* arraylist);
 void persist_to_arraylist_str     (arraylist_str_t* arraylist, char* string);
 void merge_to_arraylist_str       (arraylist_str_t* arraylist, char* string); 
 char** to_array_str(arraylist_str_t* arraylist);
