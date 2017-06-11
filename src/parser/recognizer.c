@@ -29,6 +29,16 @@ int last_slash(char* str, int len) {
     return -1;
 }
 
+int digitful(char* str, int len) {
+    size_t i; for (i = 0; i < len; i++) {
+        if (!is_digit(str[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 int regex_size(char* str, size_t len) {
     size_t i, c;
     for (i = 0, c = len; i < len; i++) {
@@ -43,5 +53,12 @@ int regex_size(char* str, size_t len) {
 
 int contains(const char* string, const regex_t* pattern) {
     return regexec(pattern, string, 0, NULL, 0) != REG_NOMATCH;
+}
+
+int is_io_redirection_token(token_t* token) {
+    tkn_type_t type = token->type;
+    return type == TKN_TYPE_IN_REDIR          || 
+           type == TKN_TYPE_OUT_REDIR_REWRITE ||
+           type == TKN_TYPE_OUT_REDIR_APPEND;
 }
 
