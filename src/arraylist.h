@@ -27,10 +27,11 @@ void merge_to_arraylist_str       (arraylist_str_t* arraylist, char* string);
 char** to_array_str(arraylist_str_t* arraylist);
 
 
-arraylist_t* new_arraylist   (size_t capacity, void (*destructor)(void*));
-void remove_arraylist        (arraylist_t* arraylist);
-void persist_to_arraylist    (arraylist_t* arraylist, void* data);
-void remove_from_arraylist   (arraylist_t* arraylist, size_t index);
-void merge_arraylists        (arraylist_t* dest, arraylist_t* src, size_t pos);
+arraylist_t* new_arraylist     (size_t capacity, void (*destructor)(void*));
+void** hard_copy_arraylist     (arraylist_t* arraylist);
+void   remove_arraylist        (arraylist_t* arraylist);
+void   persist_to_arraylist    (arraylist_t* arraylist, void* data);
+void   remove_from_arraylist   (arraylist_t* arraylist, size_t index);
+void   merge_arraylists        (arraylist_t* dest, arraylist_t* src, size_t pos);
 
 #endif

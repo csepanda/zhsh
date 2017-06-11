@@ -73,6 +73,15 @@ void remove_arraylist(arraylist_t* arraylist) {
     free(arraylist);
 }
 
+void** hard_copy_arraylist(arraylist_t* arraylist) {
+    void** data = malloc(sizeof(void*)*arraylist->size);
+    size_t i; for (i = 0; i < arraylist->size; i++) {
+        data[i] = arraylist->data[i];
+    }
+
+    return data;
+}
+
 void persist_to_arraylist(arraylist_t* arraylist, void* data) {
     if (arraylist->size + 1 >= arraylist->capacity) {
         size_t new_cap       = arraylist->capacity * 2;
@@ -102,10 +111,8 @@ void merge_arraylists(arraylist_t* dest, arraylist_t* src, size_t pos) {
         dest->capacity     = new_cap;
     }
 
-    if (dest->size > pos) {
-        for (i = dest->size - 1; i >= pos; i--) {
-            dest->data[i + src->size] = dest->data[i];
-        }
+    for (i = dest->size - 1; i >= pos; i--) {
+        dest->data[i + src->size] = dest->data[i];
     }
 
     for (i = 0; i < src->size; i++) {
