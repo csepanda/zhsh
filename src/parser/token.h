@@ -3,17 +3,8 @@
 
 #include <stdlib.h>
 
-#define ESCAPE_LEVEL_NOESC         0
-#define ESCAPE_LEVEL_QUOTES        1
-#define ESCAPE_LEVEL_DOUBLE_QUOTES 2
-
 #define STRHNDL_INITIAL_CAP 4096
 #define STRHNDL_AUGMENT      255
-
-#define TOKEN_PROCESSING_NO   0
-#define TOKEN_PROCESSING_VAR  1
-#define TOKEN_PROCESSING_GLOB 2
-#define TOKEN_PROCESSING_BOTH 3
 
 typedef enum { 
     TKN_PREPROCESSING_NO,   TKN_PREPROCESSING_VAR, 
