@@ -4,17 +4,16 @@ static job_list_t* jobs;
 static size_t last_updt_job = -1;
 static pid_t  SHELL_PID;
 
-job_t* new_job(pid_t pid, size_t argc, char** argv) {
+
+job_t* new_job(pid_t pid, char* cmd) {
     job_t* job = malloc(sizeof(job_t));
     job->pid     = pid;
-    job->argc    = argc;
-    job->argv    = argv;
+    job->cmd     = cmd;
     job->num     = jobs->tail == NULL ? 0 : jobs->tail->num + 1;
     job->stat    = RUNNING;
-    job->extcode = 1337;
-    job->signum  = 1337;
     job->next    = NULL;
     setpgid(pid, pid);
+    
     last_updt_job = job->num;
 
     return job;
@@ -22,10 +21,8 @@ job_t* new_job(pid_t pid, size_t argc, char** argv) {
 
 void delete_job(void* raw_job) {
     job_t* job = (job_t*) raw_job;
-    size_t i; for (i = 0; i < job->argc; i++) {
-        free(job->argv[i]);
-    }
-    free(job->argv);
+
+    free(job->cmd);
     free(job);
 }
 
@@ -34,8 +31,8 @@ void job_init() {
     SHELL_PID = getpid();
 }
 
-int add_job(pid_t pid, size_t argc, char** argv) {
-    job_t* job = new_job(pid, argc, argv);
+int add_job(pid_t pid, char* cmd) {
+    job_t* job = new_job(pid, cmd);
     if (jobs->head == NULL) {
         jobs->head = job;
         jobs->tail = job;
@@ -107,10 +104,10 @@ static void write_status(job_t* job) {
     char  exit_code[32];
     char* output;
     char* status;
-    size_t i;
     size_t num_length = int_to_string(job->num, number);
-    size_t ecd_length = int_to_string(job->extcode, exit_code);
-    size_t out_length = 34 + num_length + ecd_length;
+    size_t ecd_length = int_to_string(job->ret.exit_code, exit_code);
+    size_t cmd_length = strlen(job->cmd);
+    size_t out_length = 32 + num_length + ecd_length + cmd_length;
     output = calloc(out_length, sizeof(char));
     status = get_string_status(job->stat);
     strcat(output, "[");
@@ -118,11 +115,11 @@ static void write_status(job_t* job) {
     strcat(output, "]\t");
     strcat(output, status);
 
-    if (job->signum != 1337) {
+    if (job->stat == TERMINATED) {
         strcat(output, "(");
-        strcat(output, get_sig(job->signum).signame); 
+        strcat(output, get_sig(job->ret.signal_number).signame); 
         strcat(output, ")\t\t");
-    } else if (job->stat == DONE && job->extcode != 0 && job->extcode != 1337) {
+    } else if (job->stat == DONE && job->ret.exit_code != 0) {
         strcat(output, "(");
         strcat(output, exit_code);
         strcat(output, ")\t\t");
@@ -130,14 +127,10 @@ static void write_status(job_t* job) {
         strcat(output, "\t\t");
     }
 
+    strcat(output, job->cmd);
+    strcat(output, "\n");
+
     print(output);
-    for (i = 0; i < job->argc; i++) {
-        print(job->argv[i]);
-        print(" ");
-    }
-
-    print("\n");
-
     free(output);
 }
 
@@ -157,10 +150,15 @@ int wait_jobs() {
         pid_t ret = waitpid(job->pid, &status, WNOHANG);
         next = job->next;
         if (ret < 0) {
-            remove_job(job);
+            remove_job(job); /* already deleted */
         } else if (ret == job->pid) {
-            job->extcode = status;
-            job->stat    = DONE;
+            if (WIFEXITED(status)) {
+                job->stat = DONE;
+                job->ret.exit_code = WEXITSTATUS(status);
+            } else if (WIFSIGNALED(status)) {
+                job->stat = TERMINATED;
+                job->ret.signal_number = WTERMSIG(status);
+            }
             write_status(job);
             remove_job(job);
         }
@@ -169,7 +167,6 @@ int wait_jobs() {
 
     return 0;
 }
-
 
 int set_foreground_by_num(size_t num) {
     job_t* job = get_job(num);
@@ -190,10 +187,11 @@ int set_foreground_by_num(size_t num) {
 
     waitpid(job->pid, &status, WUNTRACED);
     if (WIFEXITED(status)) {
-        job->extcode = WEXITSTATUS(status);
+        job->stat = DONE;
+        job->ret.exit_code = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
-        job->stat   = TERMINATED;
-        job->signum = WTERMSIG(status);
+        job->stat = TERMINATED;
+        job->ret.signal_number = WTERMSIG(status);
     }
 
     if (WIFSTOPPED(status)) {
@@ -225,7 +223,6 @@ int set_foreground_last_updated_job() {
 }
 
 int set_background_by_num(size_t num) {
-    int status;
     job_t* job = get_job(num);
     if (job == NULL) {
         send_errmsg(ALARM_BG, ALARM_NO_SUCH_JOB); 
@@ -240,23 +237,6 @@ int set_background_by_num(size_t num) {
     }
 
     tcsetpgrp(STDOUT, SHELL_PID);
-
-    waitpid(job->pid, &status, WNOHANG | WUNTRACED);
-    if (WIFEXITED(status)) {
-        job->extcode = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-        job->stat   = TERMINATED;
-        job->signum = WTERMSIG(status);
-    }
-
-    if (WIFSTOPPED(status)) {
-        job->stat = STOPPED;
-        write_status(job);
-        last_updt_job = job->num;
-    } else {
-        job->stat = DONE;
-    }
-
     return 0;
 }
 
