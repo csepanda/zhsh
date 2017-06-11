@@ -1,150 +1,238 @@
 #include "interpreter.h"
 
 #include "lexer.h"
+#include "parser.h"
 #include "preprocessor.h"
 
 #define NO    0
 #define YES   1
 
-#define ESCAPE_LEVEL_NOESC         0
-#define ESCAPE_LEVEL_QUOTES        1
-#define ESCAPE_LEVEL_DOUBLE_QUOTES 2
-
 #define STRHNDL_INITIAL_CAP 4096
 #define STRHNDL_AUGMENT      255
 
-#define TOKEN_PROCESSING_NO   0
-#define TOKEN_PROCESSING_VAR  1
-#define TOKEN_PROCESSING_GLOB 2
-#define TOKEN_PROCESSING_BOTH 3
-
-typedef enum { NONE, AND, OR, PIPE    } bind_type_t;
-typedef enum { FOREGROUND, BACKGROUND } work_mode_t;
-
-typedef struct _cmd_node_t {
-    size_t  argc;
-    char**  argv;
-
-    bind_type_t linkage;
-    struct _cmd_node_t* next;
-} cmd_node_t;
-
-typedef struct {
-    size_t      count;
-    cmd_node_t* head;
-    cmd_node_t* tail;
-} cmd_queue_t;
-
-void push(cmd_queue_t* queue, cmd_node_t* cmd) {
-    if (queue->head == NULL) {
-        queue->head = cmd;
-        queue->tail = cmd;
+void execute_cmd(cmd_t* cmd) {
+    char* command_name  = cmd->argv[0];
+    builtin_t* built_in = get_builtin(command_name);
+    if (built_in == NULL) {
+        pid_t child = fork();
+        if (child == -1) {
+            alarm_msg(ALARM_CANNOT_EXEC);
+        } else if (child > 0) {
+        } else {
+            if (is_path(command_name, strlen(command_name))) {
+                execv(command_name, cmd->argv);
+                switch (errno) {
+                    case  ENOENT:
+                    case ENOTDIR:
+                        send_errmsg(command_name, ALARM_FILE_NOT_FOUND);
+                        _exit(127);
+                        break;
+                    default:
+                        send_errmsg("", ALARM_RUNTIME_ERR);
+                }
+            } else {
+                execvp(command_name, cmd->argv);
+                switch (errno) {
+                    case  ENOENT:
+                    case ENOTDIR:
+                        send_errmsg(command_name, ALARM_CMD_NOT_FOUND);
+                        _exit(127);
+                        break;
+                    default:
+                        send_errmsg("", ALARM_RUNTIME_ERR);
+                }
+            }
+            _exit(126);
+        }
     } else {
-        queue->tail->next = cmd;
+        built_in->cmd_func(cmd->argc, cmd->argv);
     }
 }
 
-static void execute(cmd_queue_t* cmds) {
+void execute_pipeline(cmd_pipeline_t* pipeline, pid_t pid, 
+                         cmd_execution_mode_t mode) {
+    int input, output, infd, outfd;
+    int backup[2];
+    int pipe_fd[2];
+    size_t i;
+    cmd_t* cmd = pipeline->head;
+    backup[0] = dup(0);
+    backup[1] = dup(1);
+    if (pipeline->io_redirections != NULL) {
+        io_redirection_t** redir = pipeline->io_redirections;
+        while (*redir != NULL) {
+            io_redirection_t*  io   = *redir;
+            redirection_type_t type = io->type;
+            if (type == FD ) {
+                dup2(io->to.fd, io->from_fd);
+            } else {
+                const int fd_flags = fcntl(io->from_fd, F_GETFL);
+                int to_fd;
+                int flags = fd_flags & O_RDONLY;
+                flags |= fd_flags & O_WRONLY;
+                flags |= fd_flags & O_RDWR;
+                flags |= flags    & O_RDONLY ? 0 : O_CREAT;
+                flags |= type == PATH_ENABLE_REWRITE ? O_TRUNC : O_APPEND;
+                if ((to_fd = open(io->to.path, flags)) == -1) {
+                    alarm_msg(strerror(errno));
+                    _exit(2);
+                }
+
+                dup2(to_fd, io->from_fd);
+            }
+            redir++;
+        }
+    }
+
+    input  = dup(STDIN);
+    output = dup(STDOUT);
+
+    infd = input; outfd = output;
+
+    for (i = 0; i < pipeline->count; i++) {
+        dup2(infd, STDIN);
+        close(infd);
+        if (i != pipeline->count - 1) {
+            pipe(pipe_fd);
+            infd  = pipe_fd[0];
+            outfd = pipe_fd[1];
+        } else {
+            outfd = output;
+        }
+
+        dup2(outfd, STDOUT);
+        close(outfd);
+        execute_cmd(cmd);
+        cmd = cmd->next;
+    }
+
+    dup2(backup[0],  STDIN);
+    dup2(backup[1], STDOUT);
 
 }
 
-static cmd_queue_t split_to_cmds(arraylist_t* tokens) {
-    size_t i; 
-    cmd_queue_t queue;
-    cmd_node_t* cmd = malloc(sizeof(cmd_node_t));
-    queue.count = 0;
-    queue.head  = NULL;
-    queue.tail  = NULL;
-    for (i = 0; i < tokens->size; i++) {
-        
+int execute_foreground(cmd_chain_t* command) {
+    pid_t child;
+    cmd_pipeline_t* pipeline = command->pipelines;
+    int   status;
+    
+    /* if pipeline contains only one command and it's builtin, then
+     * execute it in current shell without fork                     */
+    if (pipeline->count == 1) {
+        cmd_t* cmd     = pipeline->head;
+        builtin_t* builtin = get_builtin(cmd->argv[0]);
+        if (builtin != NULL) {
+            status = builtin->cmd_func(cmd->argc, cmd->argv);
+            /* shift while next pipeline execution condition 
+             * isn't passing to return status of previous pipeline  */
+            while (pipeline != NULL) { 
+                next_action_t next = pipeline->next_action;
+                pipeline = pipeline->next_pipeline;
+                if (!(!!status ^ next)) {
+                    break;
+                }
+            }
+            if (pipeline == NULL) {
+                return status;
+            }
+        }
     }
 
-    return queue;
+    /* start job */
+    if ((child = fork()) == -1) {
+        alarm_msg(ALARM_CANNOT_EXEC);
+        return -1;
+    } else if (child > 0) {
+        char* cmd_str = chain_to_string(command);
+        int num = add_job(child, cmd_str);
+        set_foreground_by_num(num);
+    } else {
+        pid_t pid = getpid();
+        while (pipeline != NULL) {
+            size_t fd; int status = 0;
+            execute_pipeline(pipeline, pid, FOREGROUND);
+            while ((child = waitpid(0, &status, WUNTRACED)) > 0);
+
+            if (WIFSIGNALED(status)) {
+                int signum = WTERMSIG(status);
+                _exit(128 + signum);
+            } else if (WIFEXITED(status)) {
+                int exit_code = WEXITSTATUS(status);
+                while (pipeline != NULL) { 
+                    next_action_t next = pipeline->next_action;
+                    pipeline = pipeline->next_pipeline;
+                    if (!(!!exit_code ^ next)) {
+                        break;
+                    }
+                }
+
+                if (pipeline == NULL) {
+                    for (fd = 3; fd < 256; fd++) {
+                        close(fd);
+                    }
+                    _exit(exit_code);
+                }
+            } else {
+                alarm_msg(ALARM_RUNTIME_ERR);
+            }
+        }
+    }
+
+    return -2; /* exited if job was stopped*/
+}
+
+void execute_background(cmd_chain_t* command) {
+    pid_t child = fork();
+    if (child == -1) {
+        alarm_msg(ALARM_CANNOT_EXEC);
+        return;
+    }
+    
+    if (child > 0) {
+        char* cmd_str = chain_to_string(command);
+        int num = add_job(child, cmd_str);
+        set_background_by_num(num);
+    } else {
+
+    }
+}
+
+void main_executor(arraylist_t* commands) {
+    size_t i; int fd_backup[255];
+    memset(fd_backup, -1, 255);
+    for (i = 0; i < commands->size; i++) {
+        cmd_chain_t* command = commands->data[i];
+        if (command->execution_mode == BACKGROUND) {
+            execute_background(command);
+        } else {
+            execute_foreground(command);
+        }
+    }
 }
 
 void handle_line(char* line, const size_t size) {
-    char* IFS = get_env("IFS");
-    char* token;
-    char** to_merge;
-    char** args;
-    size_t i, j;
+    arraylist_t* commands;
     arraylist_t* tokens = tokenize(line, size);
-    arraylist_str_t* args_list;
-    for (i = 0; i < tokens->size; i++) {
+    size_t i; for (i = 0; i < tokens->size; i++) {
         token_t* t = tokens->data[i];
-        if (t->preproccessing_level & TOKEN_PROCESSING_VAR) {
+        if (t->type != TKN_TYPE_BARE_WORD) {
+            continue;
+        }
+        if (t->preproccessing_level & TKN_PREPROCESSING_VAR) {
             expand_variables(t);
         }
-        if (t->preproccessing_level & TOKEN_PROCESSING_GLOB) {
-            open_glob(tokens, i);
+        if (t->preproccessing_level & TKN_PREPROCESSING_GLOB) {
+            i += open_glob(tokens, i);
         }
     }
 
-    to_merge = malloc(sizeof(char*)*(tokens->size + 1));
-    for (i = 0, j = 0; i < tokens->size; i++) {
-        if (((token_t*)tokens->data[i])->type == TKN_TYPE_BARE_WORD) {
-            to_merge[j++] = ((token_t*)tokens->data[i])->str;
-        }
-    }
-    to_merge[j] = NULL;
-    line = merge_strings(to_merge, ' ', NO);
-
-    token     = strtok(line, IFS);
-    args_list = new_arraylist_str(2 + tokens->size);
-    while (token != NULL) {
-        merge_to_arraylist_str(args_list, token);
-        token     = strtok(NULL, IFS);
-    } 
-
-
-    if (args_list->size > 0) {
-        size_t argc = args_list->size;
-        args = to_array_str(args_list);
-        if (exec_builtin_cmd(argc, args) != -2) {
-            size_t i; for (i = 0; i < argc; i++) {
-                free(args[i]);
-            }
-            free(args);
-        } else {
-            pid_t child = fork();
-            if (child == -1) {
-                alarm_msg(ALARM_CANNOT_EXEC);
-            } else if (child > 0) {
-                int num = add_job(child, argc, args);
-                set_foreground_by_num(num);
-            } else if (is_path(args[0], strlen(args[0]))) {
-                reset_tty();
-                execv(args[0], args);
-                switch (errno) {
-                case  ENOENT:
-                case ENOTDIR:
-                    send_errmsg(args[0], ALARM_FILE_NOT_FOUND);
-                    break;
-                default:
-                    send_errmsg("", ALARM_RUNTIME_ERR);
-                }
-                _exit(127);
-            } else {
-                reset_tty();
-                if (strchr(line, '&') != NULL) {
-                }
-                execvp(args[0], args);
-                switch (errno) {
-                case  ENOENT:
-                case ENOTDIR:
-                    send_errmsg(args[0], ALARM_CMD_NOT_FOUND);
-                    break;
-                default:
-                    send_errmsg("", ALARM_RUNTIME_ERR);
-                }
-                _exit(127);
-            }
-        }
+    commands = parse(tokens);
+    if (commands != NULL) {
+        main_executor(commands);
+        remove_arraylist(commands);
     }
 
     free(line);
-    free(to_merge);
     remove_arraylist(tokens);
-    remove_arraylist_str(args_list);
 }
 
