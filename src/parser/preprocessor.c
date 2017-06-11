@@ -125,10 +125,21 @@ int open_glob(arraylist_t* list, size_t index) {
         }
 
         if (contains(name, &regex)) { 
-            char*    str = strdup(name);
-            size_t   len = strlen(name);
-            token_t* tkn = new_token_bw(str, len, TKN_ESCAPE_LEVEL_NO, 
-                                                  TKN_PREPROCESSING_NO);
+            char* str; size_t len; token_t* tkn;
+            const tkn_preprocessing_level_t plvl = TKN_PREPROCESSING_NO;
+            const tkn_escape_level_t        elvl = TKN_ESCAPE_LEVEL_NO;
+
+            if (CUSTOM_PATH) {
+                str = calloc(strlen(name) + strlen(path) + 1, sizeof(char));
+                strcat(str, path);
+                strcat(str, name);
+                len = strlen(str);
+            } else {
+                str = strdup(name);
+                len = strlen(name);
+            }
+
+            tkn = new_token_bw(str, len, elvl, plvl);
             persist_to_arraylist(expanded, tkn);
         }
     }
@@ -140,16 +151,16 @@ int open_glob(arraylist_t* list, size_t index) {
     free(pattern);
 
     if (expanded->size != 0) {
-        list->size--;
+        size_t count = expanded->size - 1;
+        remove_from_arraylist(list, index);
         merge_arraylists(list, expanded, index);
-        delete_token(token);
         free(expanded->data);
         free(expanded);
-        return 0;
+        return count;
     }
 
     free(expanded->data);
     free(expanded);
 
-    return -1;
+    return 0;
 }
