@@ -26,8 +26,8 @@
 #define ALARM_ILLEGAL_PROC    "Not existing process\n"
 #define ALARM_TOO_MANY_ARGS   "Too many arguments\n"
 #define ALARM_RUNTIME_ERR     "Runtime error occurred\n"
-#define ALARM_CMD_NOT_FOUND   ":: Command not found\n"
-#define ALARM_FILE_NOT_FOUND  ":: No such file or directory\n"
+#define ALARM_CMD_NOT_FOUND   ": Command not found\n"
+#define ALARM_FILE_NOT_FOUND  ": No such file or directory\n"
 #define ALARM_NO_SUCH_JOB     "No such job\n"
 
 #define ALARM_CD    "cannot change directory. "
