@@ -2,8 +2,6 @@
 
 #include "builtins/pwd.c"
 #include "builtins/cd.c"
-#include "builtins/echo.c"
-#include "builtins/kill.c"
 #include "builtins/true.c"
 #include "builtins/false.c"
 #include "builtins/shift.c"
@@ -14,7 +12,6 @@
 
 builtin_t builtins[] = { 
     { "cd",       cd_builtin }, { "pwd",     pwd_builtin },
-    { "echo",   echo_builtin }, { "kill",   kill_builtin },
     { "shift", shift_builtin }, { "exit",   exit_builtin },
     { "true",   true_builtin }, { "false", false_builtin },
     { "jobs",   jobs_builtin }, { "fg",       fg_builtin },
@@ -22,6 +19,19 @@ builtin_t builtins[] = {
     { NULL, NULL }
 };
 
+
+builtin_t* get_builtin(char* cmd) {
+    builtin_t* ptr = builtins;
+    while ((*ptr).cmd_name != NULL) {
+        char* cmd_name = (*ptr).cmd_name;
+        if (strcmp(cmd_name, cmd) == 0) {
+            return ptr;
+        }
+        ptr++;
+    }
+
+    return NULL;
+}
 
 int exec_builtin_cmd(size_t argc, char** argv) {
     builtin_t* ptr = builtins;

@@ -39,4 +39,6 @@ int true_builtin (size_t argc, char** argv);
 int false_builtin(size_t argc, char** argv);
 
 int exec_builtin_cmd(size_t argc, char** argv);
+
+builtin_t* get_builtin(char* cmd);
 #endif
