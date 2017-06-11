@@ -17,7 +17,7 @@ static void reset(int* is_token, size_t* index,
 
 static void push_word(arraylist_t* storage, char* token_buffer, size_t len, 
                       tkn_escape_level_t esc_lvl,
-                      tkn_escape_level_t tkn_proc) {
+                      tkn_preprocessing_level_t tkn_proc) {
     char* str; token_buffer[len] = '\0';
     str = strdup(token_buffer);
     persist_to_arraylist(storage, new_token_bw(str, len, esc_lvl, tkn_proc));
@@ -51,12 +51,14 @@ arraylist_t* tokenize(char* line, const size_t length) {
                 push_word(tokens, token, j, esc_lvl, tkn_proc);
                 reset(&IS_TOKEN, &j, &esc_lvl, &tkn_proc);
             } else {
-               if (esc_lvl != ESCAPE_LEVEL_QUOTES && 
+               if (esc_lvl != TKN_ESCAPE_LEVEL_QUOTES && 
                     c == '$' && token[j - 1] != '\\') {
-                    tkn_proc |= TOKEN_PROCESSING_VAR; 
-                } else if (esc_lvl == ESCAPE_LEVEL_NOESC) {
+                    tkn_proc |= TKN_PREPROCESSING_VAR; 
+                    token[j++] = c;
+                } else if (esc_lvl == TKN_ESCAPE_LEVEL_NO) {
                     if ((c == '*' || c == '?') && token[j - 1] != '\\') {
-                        tkn_proc |= TOKEN_PROCESSING_GLOB;
+                        tkn_proc |= TKN_PREPROCESSING_GLOB;
+                        token[j++] = c;
                     } else if (c == ';' && token[j - 1] != '\\') {
                         push_word(tokens, token, j, esc_lvl, tkn_proc);
                         push_bind(tokens, TKN_TYPE_BIND_SEMICOLON);
@@ -120,20 +122,29 @@ arraylist_t* tokenize(char* line, const size_t length) {
                 } else {
                     push_bind(tokens, TKN_TYPE_BIND_BG);
                 }
-            } else {
-                if (c == '\'') { 
-                    esc_lvl = TKN_ESCAPE_LEVEL_QUOTES;
-                } else if (c == '\"') { 
-                    esc_lvl = TKN_ESCAPE_LEVEL_DOUBLE_QUEOTES;
+            } else if (c == '>') {
+                reset(&IS_TOKEN, &j, &esc_lvl, &tkn_proc);
+                if (line[i + 1] == '>') {
+                    push_bind(tokens, TKN_TYPE_OUT_REDIR_APPEND); i++;
                 } else {
-                    esc_lvl = ESCAPE_LEVEL_NOESC;
-                    if (c == '$') { 
-                        tkn_proc |= TKN_PREPROCESSING_VAR;
-                    } else if (c == '*' || c == '?') { 
-                        tkn_proc |= TKN_PREPROCESSING_GLOB;
-                    }
-                    token[j++] = c;
+                    push_bind(tokens, TKN_TYPE_OUT_REDIR_REWRITE);
                 }
+            } else if (c == '<') {
+                push_bind(tokens, TKN_TYPE_IN_REDIR);
+            } else if (c == '\'') { 
+                esc_lvl = TKN_ESCAPE_LEVEL_QUOTES;
+                IS_TOKEN = YES;
+            } else if (c == '\"') { 
+                esc_lvl = TKN_ESCAPE_LEVEL_DOUBLE_QUEOTES;
+                IS_TOKEN = YES;
+            } else {
+                esc_lvl = TKN_ESCAPE_LEVEL_NO;
+                if (c == '$') { 
+                    tkn_proc |= TKN_PREPROCESSING_VAR;
+                } else if (c == '*' || c == '?') { 
+                    tkn_proc |= TKN_PREPROCESSING_GLOB;
+                }
+                token[j++] = c;
                 IS_TOKEN = YES;
             }
         }
