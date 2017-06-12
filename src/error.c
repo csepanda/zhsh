@@ -7,6 +7,11 @@ void panic(const char* const message, exit_code_t exit_code) {
     _exit(exit_code);
 }
 
+void alarm_errno() {
+    err_write("zhsh: ");
+    err_write(strerror(errno));
+}
+
 void alarm_msg(const char* const message) {
     err_write(message);
 }

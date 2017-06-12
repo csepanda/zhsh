@@ -64,5 +64,10 @@ void alarm_msg(const char* const message);
  * */
 void send_errmsg(const char* const caller, const char* const cause);
 
+
+/* function  alarm_errno :: print error message of current errno state */
+void alarm_errno();
+
+
 #endif
 
