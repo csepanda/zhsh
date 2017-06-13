@@ -21,7 +21,17 @@ int is_whitespace(char c) {
     return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
-int last_slash(char* str, int len) {
+int is_empty(char* str, size_t len) {
+    size_t i; for (i = 0; i < len; i++) {
+        if (!is_whitespace(str[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int last_slash(char* str, size_t len) {
     int i; for (i = len; i >= 0; i--) {
         if (str[i] == '/') return i;
     }
@@ -29,7 +39,7 @@ int last_slash(char* str, int len) {
     return -1;
 }
 
-int digitful(char* str, int len) {
+int digitful(char* str, size_t len) {
     size_t i; for (i = 0; i < len; i++) {
         if (!is_digit(str[i])) {
             return 0;
