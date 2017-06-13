@@ -9,6 +9,22 @@ void tty_navigation_object_ini(void) {
     tty_navigation_object_ini_position();
 }
 
+void tty_navigation_line_down(void) {
+    write(1, "[1E", 4);
+}
+
+void tty_navigation_line_up(void) {
+    write(1, "[1F", 4);
+}
+
+void tty_navigation_save_pos_native(void) {
+    write(1, "[s", 3);
+}
+
+void tty_navigation_restore_pos_native(void) {
+    write(1, "[u", 3);
+}
+
 void tty_navigation_move(tty_navigation_direction_t direction) {
     switch (direction) {
     case TTY_MOVE_UP:
@@ -52,6 +68,37 @@ void tty_navigation_print_debug_info(void) {
     puts("\tuser's input position {");
     printf("\t\tx: %i\n\t\ty: %i\n\t}\n", ip->x, ip->y);
     puts("}");
+}
+
+void tty_navigation_save_position(tty_navigation_position_t* pos) {
+    int i = 0; char buffer[32];
+
+    /* 
+     * CSI 6n :: device status report
+     * return to stdin the cursor position in format ESC[n;mR
+     *      n :: row
+     *      m :: column
+     */
+    write(1, "[6n", 4); 
+
+    read(0, buffer, 2);
+    if (buffer[0] != '' || buffer[1] != '[') {
+        panic(PANIC_TTY_NAVIGATION_INI_POSITION_READ_ERROR, 
+              PANIC_ZHSH_INITIALIZATION_ERROR_CODE);
+    }
+    
+    while (read(0, (buffer + i++), 1) == 1) {
+        if (buffer[i - 1] == ';') {
+            buffer[i - 1] = '\0';
+            pos->y = atoi(buffer);
+            i = 0;
+        } else if (buffer[i - 1] == 'R') {
+            buffer[i - 1] = '\0';
+            pos->x = atoi(buffer);
+            break;
+        }
+    }
+
 }
 
 

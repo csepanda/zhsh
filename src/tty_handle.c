@@ -11,7 +11,7 @@ int set_tty_ncanon(void) {
 
     tcgetattr(0, &tty);
     saved_tty = tty;
-    tty.c_lflag &= ~(ICANON|ECHO|ISIG);
+    tty.c_lflag &= ~(ICANON|ECHO);
     tty.c_cc[VMIN] = 1;
     tcsetattr(0, TCSAFLUSH, &tty);
     tcgetattr(0, &nocan_tty);

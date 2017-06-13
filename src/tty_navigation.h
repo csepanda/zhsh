@@ -39,8 +39,13 @@ tty_navigation_t tty_navigation;
 
 void tty_navigation_object_ini(void);
 void tty_navigation_position_reset(void);
+void tty_navigation_save_pos_native(void);
+void tty_navigation_restore_pos_native(void);
 void tty_navigation_move(tty_navigation_direction_t direction);
 void tty_navigation_move_to(tty_navigation_position_t position);
+void tty_navigation_line_down(void);
+void tty_navigation_line_up(void);
 void tty_navigation_print_debug_info(void);
+void tty_navigation_save_position(tty_navigation_position_t* position);
 
 #endif
