@@ -30,7 +30,7 @@ void remove_arraylist_str(arraylist_str_t* arraylist) {
 void persist_to_arraylist_str(arraylist_str_t* arraylist, char* string) {
     if (arraylist->size + 1 >= arraylist->capacity) {
         size_t new_cap      = arraylist->capacity * 2;
-        char** reallocated  = realloc(arraylist->data, new_cap*sizeof(char)); 
+        char** reallocated  = realloc(arraylist->data, new_cap*sizeof(char*)); 
         arraylist->data     = reallocated;
         arraylist->capacity = new_cap;
     }
