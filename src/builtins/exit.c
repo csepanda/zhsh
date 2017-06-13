@@ -12,6 +12,7 @@ int exit_builtin(size_t argc, char** argv) {
     }
 
     reset_tty();
+    history_save();
     _exit(exit_code);
 
     return 0;
