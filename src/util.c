@@ -45,7 +45,7 @@ char* strdup(const char* string) {
 }
 
 char* merge_strings(char** strings, char separator, int need_to_free) {
-    char* new_string;
+    char*  new_string;
     char** ptr = strings;
     size_t total_length = 0, i = 0, j = 0;
     while (*ptr != NULL) { total_length += strlen(*ptr); i++; ptr++; }
